@@ -32,8 +32,9 @@ route.post("/", (req, res) => {
   if (!error) {
     let event = { id: schoolMgmt.events[SIZE - 1].id + 1 };
     Object.assign(event, value);
+    schoolMgmt.newEventObject(event);
 
-    // Maybe make that set thing.
+    // // Maybe make that set thing.
     event.students = schoolMgmt.enrollStudents(event.students);
     schoolMgmt.newEventObject(event);
 
@@ -67,10 +68,7 @@ route.put("/:id", (req, res) => {
     schoolMgmt.events[eventRes.pos].hour = value.hour;
     schoolMgmt.events[eventRes.pos].place = value.place;
     schoolMgmt.events[eventRes.pos].speaker_name = value.speaker_name;
-    schoolMgmt.events[eventRes.pos].students = noDuplicates(
-      enrolled,
-      students
-    );
+    schoolMgmt.events[eventRes.pos].students = value.students;
 
     for (let dStudent of dsSet) {
       id = schoolMgmt.events[eventRes.pos].students.indexOf(dStudent);
@@ -100,6 +98,7 @@ route.delete("/:id", (req, res) => {
 //                    ╔===================╗                    //
 // ===================╣ Utility functions ╠=================== //
 //                    ╚===================╝                    //
+
 function eventValidation(body) {
   const hourRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
   const schema = Joi.object({
@@ -107,16 +106,16 @@ function eventValidation(body) {
     hour: Joi.string().regex(hourRegex).required(),
     place: Joi.string().required(),
     speaker_name: Joi.string().required(),
-    students: Joi.string().required()
+    students: Joi.array().items(Joi.number().integer()).required(),
   });
 
   return schema.validate(body);
 }
 
-function noDuplicates(arr1, arr2) {
-  arr1.forEach((item1) => arr2.push(item1));
+// function noDuplicates(arr1, arr2) {
+//   arr1.forEach((item1) => arr2.push(item1));
 
-  return [...new Set(arr2)].sort();
-}
+//   return [...new Set(arr2)].sort();
+// }
 
 module.exports = route;

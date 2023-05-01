@@ -111,11 +111,15 @@ class Student {
   
     /* -  -  -  -  -  -  -  -  -  -  - Course's Management -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
     // Adds a course by copying from an object.
+    // newEventObject(event) {
+    //   if (this.eventIdAvailable(event.id)) this.events.students = this.enrollStudents(event.students);
+    //     if (this.events.students.length > 0) this.events.push(event);
+      
+    // }
+
     newEventObject(event) {
-      if (this.eventIdAvailable(event.id)) {
-        this.events.students = this.enrollStudents(event.students);
-        if (this.events.students.length > 0) this.events.push(event);
-      }
+      if (this.eventIdAvailable(event.id)) this.events.push(event);
+      else return undefined;
     }
   
     // Looks for a student in the database. Returns the index in the array and the respective student. If it doesn't exists, returns -1 and object undefined.
@@ -153,13 +157,11 @@ class Student {
   
   // Courses array for testing. Note that it contains non-existing arrays. It does not add them.
   let events = [
-  new Event(1, "Ponencia C", "12:00", "Auditorio 101", "Pinales", []),
-  new Event(2, "Ponencia C++", "12:00", "Auditorio 10", "Pinales", []),
-  new Event(3, "Ponencia Python", "12:00", "Auditorio 101", "Pinales", []),
-  new Event(4, "Ponencia JavaScript", "12:00", "Auditorio 101", "Pinales", []),
-  new Event(5, "Ponencia Ruby", "12:00", "Auditorio 101", "Pinales", []),
-  ];
-  
+  new Event(1, "Ponencia C", "11:00", "Auditorio 101", "Pinales", []),
+  new Event(2, "Ponencia C++", "16:00", "Auditorio 10", "Raul Sanchez", []),
+  new Event(3, "Ponencia Python", "08:00", "Auditorio 101", "Juan Pablo", []),
+  new Event(4, "Ponencia JavaScript", "14:00", "Auditorio 101", "Juan Carlos", []),
+  ]
   // SchoorlManagement object initialized by constructor adding the students and courses lists.
   const schoolMgmt = new EventManagement(students, events);
   

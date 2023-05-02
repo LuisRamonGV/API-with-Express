@@ -68,6 +68,7 @@ route.put("/:id", (req, res) => {
     schoolMgmt.events[eventRes.pos].hour = value.hour;
     schoolMgmt.events[eventRes.pos].place = value.place;
     schoolMgmt.events[eventRes.pos].speaker_name = value.speaker_name;
+    schoolMgmt.events[eventRes.pos].date = value.date;
     schoolMgmt.events[eventRes.pos].students = value.students;
 
     for (let dStudent of dsSet) {
@@ -101,16 +102,48 @@ route.delete("/:id", (req, res) => {
 
 function eventValidation(body) {
   const hourRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+  const dateRegex = /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/;
   const schema = Joi.object({
     title: Joi.string().required(),
     hour: Joi.string().regex(hourRegex).required(),
     place: Joi.string().required(),
     speaker_name: Joi.string().required(),
+    date: Joi.string().pattern(dateRegex).required(),
     students: Joi.array().items(Joi.number().integer()).required(),
   });
 
-  return schema.validate(body);
+  const { value, error } = schema.validate(body);
+
+  if (error) {
+    const errMsg = error.details[0].message;
+    throw new Error(errMsg);
+  }
+
+    // Verify that all student ids exist
+  // const nonExistingStudents = value.students.filter((id) => !schoolMgmt.students.includes(id));
+  // if (nonExistingStudents.length > 0) {
+  //   const errMsg = `The following students dont exist: ${nonExistingStudents.join(", ")}`;
+  //   throw new Error(errMsg);
+  // }
+
+  noDuplicates(value);
+
+  return { value };
 }
+
+function noDuplicates(body) {
+  const { date, hour, place } = body;
+  const eventsOnDateAndPlace = schoolMgmt.events.filter(
+    (event) => event.date === date && event.hour === hour && event.place === place
+  );
+
+  if (eventsOnDateAndPlace.length > 0) {
+    const err = new Error("There is already an event registered at this date, time and place.");
+    err.status = 400;
+    throw err;
+  }
+}
+
 
 // function noDuplicates(arr1, arr2) {
 //   arr1.forEach((item1) => arr2.push(item1));

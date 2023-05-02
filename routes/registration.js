@@ -11,12 +11,13 @@ class Student {
   
   // event class: Declares the prototype for the event objects.
   class Event {
-    constructor(id, title, hour, place, speaker_name,  students) {
+    constructor(id, title, hour, place, speaker_name,  date, students) {
       this.id = id;
       this.title = title;
       this.hour = hour;
       this.place = place;
       this.speaker_name = speaker_name;
+      this.date = date;
       this. students = students;
     }
   }
@@ -157,10 +158,10 @@ class Student {
   
   // Courses array for testing. Note that it contains non-existing arrays. It does not add them.
   let events = [
-  new Event(1, "Ponencia C", "11:00", "Auditorio 101", "Pinales", []),
-  new Event(2, "Ponencia C++", "16:00", "Auditorio 10", "Raul Sanchez", []),
-  new Event(3, "Ponencia Python", "08:00", "Auditorio 101", "Juan Pablo", []),
-  new Event(4, "Ponencia JavaScript", "14:00", "Auditorio 101", "Juan Carlos", []),
+  new Event(1, "Ponencia C", "11:00", "Auditorio 101", "Pinales", "14/09/2023", [1, 2]),
+  new Event(2, "Ponencia C++", "16:00", "Auditorio 10", "Raul Sanchez", "15/09/2023", []),
+  new Event(3, "Ponencia Python", "08:00", "Auditorio 101", "Juan Pablo", "16/09/2023", []),
+  new Event(4, "Ponencia JavaScript", "14:00", "Auditorio 101", "Juan Carlos", "17/09/2023", []),
   ]
   // SchoorlManagement object initialized by constructor adding the students and courses lists.
   const schoolMgmt = new EventManagement(students, events);

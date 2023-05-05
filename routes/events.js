@@ -4,19 +4,37 @@ const Joi = require("joi");
 
 const route = express.Router();
 
-// My imports
-const schoolMgmt = require("./registration");
+// event class: Declares the prototype for the event objects.
+class Event {
+  constructor(id, title, hour, place, speaker_name,  date, students) {
+    this.id = id;
+    this.title = title;
+    this.hour = hour;
+    this.place = place;
+    this.speaker_name = speaker_name;
+    this.date = date;
+    this. students = students;
+  }
+}
+
+// Courses array for testing. Note that it contains non-existing arrays. It does not add them.
+let events = [
+  new Event(1, "Ponencia C", "11:00", "Auditorio 101", "Pinales", "14/09/2023", [1, 2]),
+  new Event(2, "Ponencia C++", "16:00", "Auditorio 10", "Raul Sanchez", "15/09/2023", []),
+  new Event(3, "Ponencia Python", "08:00", "Auditorio 101", "Juan Pablo", "16/09/2023", []),
+  new Event(4, "Ponencia JavaScript", "14:00", "Auditorio 101", "Juan Carlos", "17/09/2023", []),
+  ]
 
 //                    ╔================╗                    //
 // ===================╣      GET       ╠=================== //
 //                    ╚================╝                    //
 
 route.get("/", (req, res) => {
-  res.status(200).send(schoolMgmt.events);
+  res.status(200).send(events);
 });
 
 route.get("/:id", (req, res) => {
-  const event = schoolMgmt.findEventById(req.params.id).data;
+  const event = findEventById(req.params.id).data;
   if (event !== undefined) res.status(200).send(event);
   else res.status(400).send({ error: "Non existing event", data: undefined });
 });
@@ -26,17 +44,17 @@ route.get("/:id", (req, res) => {
 //                    ╚================╝                    //
 
 route.post("/", (req, res) => {
-  const SIZE = schoolMgmt.events.length;
+  const SIZE = events.length;
   const { value, error } = eventValidation(req.body);
 
   if (!error) {
-    let event = { id: schoolMgmt.events[SIZE - 1].id + 1 };
+    let event = { id: events[SIZE - 1].id + 1 };
     Object.assign(event, value);
-    schoolMgmt.newEventObject(event);
+    newEventObject(event);
 
     // // Maybe make that set thing.
-    event.students = schoolMgmt.enrollStudents(event.students);
-    schoolMgmt.newEventObject(event);
+    event.students = enrollStudents(event.students);
+    newEventObject(event);
 
     res.send(event);
   } else {
@@ -50,7 +68,7 @@ route.post("/", (req, res) => {
 //                    ╚================╝                    //
 
 route.put("/:id", (req, res) => {
-  const eventRes = schoolMgmt.findEventById(req.params.id);
+  const eventRes = findEventById(req.params.id);
 
   if (eventRes.data !== undefined) {
     const { value, error } = eventValidation(req.body);
@@ -60,21 +78,21 @@ route.put("/:id", (req, res) => {
       return;
     }
 
-    const enrolled = schoolMgmt.enrollStudents(value.students),
-      students = schoolMgmt.events[eventRes.pos].students,
+    const enrolled = enrollStudents(value.students),
+      students = events[eventRes.pos].students,
       dsSet = new Set(req.body.delete);
 
-    schoolMgmt.events[eventRes.pos].title = value.title;
-    schoolMgmt.events[eventRes.pos].hour = value.hour;
-    schoolMgmt.events[eventRes.pos].place = value.place;
-    schoolMgmt.events[eventRes.pos].speaker_name = value.speaker_name;
-    schoolMgmt.events[eventRes.pos].date = value.date;
-    schoolMgmt.events[eventRes.pos].students = value.students;
+    events[eventRes.pos].title = value.title;
+    events[eventRes.pos].hour = value.hour;
+    events[eventRes.pos].place = value.place;
+    events[eventRes.pos].speaker_name = value.speaker_name;
+    events[eventRes.pos].date = value.date;
+   events[eventRes.pos].students = value.students;
 
     for (let dStudent of dsSet) {
-      id = schoolMgmt.events[eventRes.pos].students.indexOf(dStudent);
+      id = events[eventRes.pos].students.indexOf(dStudent);
       console.log(dStudent, id);
-      if (id !== -1) schoolMgmt.events[eventRes.pos].students.splice(id, 1);
+      if (id !== -1) events[eventRes.pos].students.splice(id, 1);
     }
 
     res.status(200).send(value);
@@ -88,10 +106,10 @@ route.put("/:id", (req, res) => {
 //                    ╚================╝                    //
 
 route.delete("/:id", (req, res) => {
-  const eventRes = schoolMgmt.findEventById(req.params.id);
+  const eventRes = findEventById(req.params.id);
 
   if (eventRes.data !== undefined) {
-    schoolMgmt.events.splice(eventRes.pos, 1);
+    events.splice(eventRes.pos, 1);
     res.status(200).send(eventRes.data);
   } else res.status(404).send("Error. This event does not exist.");
 });
@@ -131,9 +149,63 @@ function eventValidation(body) {
   return { value };
 }
 
+// Verifies if a specific id for a event is available.
+function eventIdAvailable(id) {
+  const SIZE = events.length;
+  for (let i = 0; i < SIZE; i++)
+    if (events[i].id === parseInt(id)) return false;
+  return true;
+}
+
+ // Enrolls a students list in a new event.
+ function enrollStudents(students) {
+  const EVENT_STUDENTS_SIZE = students.length;
+  const STUDENTS_SIZE = students.length;
+
+  let enrolled = [];
+
+  for (let i = 0; i < EVENT_STUDENTS_SIZE; i++)
+    for (let j = 0; j < STUDENTS_SIZE; j++)
+      if (students[i] === students[j].id) {
+        enrolled.push(students[i]);
+        break;
+      }
+
+  return enrolled;
+}
+
+function newEventObject(event) {
+  if (eventIdAvailable(event.id)) events.push(event);
+  else return undefined;
+}
+
+  // Looks for a student in the database. Returns the index in the array and the respective student. If it doesn't exists, returns -1 and object undefined.
+function findEventById(id) {
+    const SIZE = events.length;
+    if (SIZE > 1) {
+      if (!eventIdAvailable(id)) {
+        for (let i = 0; i < SIZE; i++)
+          if (events[i].id === parseInt(id, 10))
+            return { pos: i, data: events[i] };
+      }
+    }
+    return { pos: -1, data: undefined };
+  }
+
+    // Deletes a course from the database.
+function deleteEvent(id) {
+      const res = findEventById(id);
+      if (res.data !== undefined) {
+        events.splice(res.pos, 1);
+        return res.data;
+      }
+      return undefined;
+    }
+  
+
 function noDuplicates(body) {
   const { date, hour, place } = body;
-  const eventsOnDateAndPlace = schoolMgmt.events.filter(
+  const eventsOnDateAndPlace = events.filter(
     (event) => event.date === date && event.hour === hour && event.place === place
   );
 
@@ -151,4 +223,7 @@ function noDuplicates(body) {
 //   return [...new Set(arr2)].sort();
 // }
 
-module.exports = route;
+module.exports = {
+  routeEvents: route,
+  Events: events
+};

@@ -1,170 +1,88 @@
-// Student class: Declares the prototype for the Student objects.
-class Student {
-    constructor(id, fullName, semester, email, career) {
-      this.id = id;
-      this.fullName = fullName;
-      this.semester = semester;
-      this.email = email;
-      this.career = career;
-    }
-  }
-  
-  // event class: Declares the prototype for the event objects.
-  class Event {
-    constructor(id, title, hour, place, speaker_name,  date, students) {
-      this.id = id;
-      this.title = title;
-      this.hour = hour;
-      this.place = place;
-      this.speaker_name = speaker_name;
-      this.date = date;
-      this. students = students;
-    }
-  }
-  
-  
-  // SchoolManagement class: Relates the Student with the eventclass and all its CRUD operations.
-  class EventManagement {
-    constructor(students = [], Events = []) {
-      this.students = students;
-      this.events = Events;
-    }
-  
-    /* -  -  -  -  -  -  -  -  -  -  - Utility Functions -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
-    // Verifies if a specific id for a student is available.
-    studentIdAvailable(id) {
-      const SIZE = this.students.length;
-      for (let i = 0; i < SIZE; i++)
-        if (this.students[i].id === parseInt(id)) return false;
-      return true;
-    }
-  
-    // Verifies if a specific id for a event is available.
-    eventIdAvailable(id) {
-      const SIZE = this.events.length;
-      for (let i = 0; i < SIZE; i++)
-        if (this.events[i].id === parseInt(id)) return false;
-      return true;
-    }
-  
-    // Enrolls a students list in a new event.
-    enrollStudents(students) {
-      const EVENT_STUDENTS_SIZE = students.length;
-      const STUDENTS_SIZE = this.students.length;
-  
-      let enrolled = [];
-  
-      for (let i = 0; i < EVENT_STUDENTS_SIZE; i++)
-        for (let j = 0; j < STUDENTS_SIZE; j++)
-          if (students[i] === this.students[j].id) {
-            enrolled.push(students[i]);
-            break;
-          }
-  
-      return enrolled;
-    }
-  
-    /* -  -  -  -  -  -  -  -  -  -  - Utility Functions End -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
-  
-    /* -  -  -  -  -  -  -  -  -  -  - Student's Management -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
-    // Adds a student by copying from an object.
-    newStudentObject(student) {
-      if (this.studentIdAvailable(student.id)) this.students.push(student);
-      else return undefined;
-    }
-  
-    // Looks for a student in the database. Returns the index in the array and the respective student. If it doesn't exists, returns -1 and object undefined.
-    findStudentById(id) {
-      const SIZE = this.students.length;
-      if (SIZE > 0) {
-        if (!this.studentIdAvailable(id)) {
-          for (let i = 0; i < SIZE; i++)
-            if (this.students[i].id === parseInt(id, 10))
-              return { pos: i, data: this.students[i] };
-        }
-      }
-  
-      return { pos: -1, data: undefined };
-    }
-  
-    // Deletes a student from the database. It also deletes it from each event it is in.
-    deleteStudent(id) {
-      const res = this.findStudentById(id);
-      if (res.data !== undefined) {
-        this.students.splice(res.pos, 1);
-        const EVENT_STUDENTS_SIZE = this.events.length;
-  
-        // Looks for the student registers in events.
-        for (let i = 0; i < EVENT_STUDENTS_SIZE; i++) {
-          const STUDENTS_IN_EVENT = this.events[i].students.length;
-          for (let j = 0; j < STUDENTS_IN_EVENT; j++) {
-            if (this.events[i].students[j] === id) {
-              this.events[i].students.splice(j, 1);
-              break;
-            }
-          }
-        }
-        return res.data;
-      }
-      return undefined;
-    }
-    /* -  -  -  -  -  -  -  -  -  -  - Student's Management End -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
-  
-    /* -  -  -  -  -  -  -  -  -  -  - Course's Management -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
-    // Adds a course by copying from an object.
-    // newEventObject(event) {
-    //   if (this.eventIdAvailable(event.id)) this.events.students = this.enrollStudents(event.students);
-    //     if (this.events.students.length > 0) this.events.push(event);
-      
-    // }
+// Global Imports
+const express = require("express");
+const Joi = require("joi");
+const route = express.Router();
+const { Students } = require('./students');
+const { Events } = require('./events');
 
-    newEventObject(event) {
-      if (this.eventIdAvailable(event.id)) this.events.push(event);
-      else return undefined;
-    }
-  
-    // Looks for a student in the database. Returns the index in the array and the respective student. If it doesn't exists, returns -1 and object undefined.
-    findEventById(id) {
-      const SIZE = this.events.length;
-      if (SIZE > 1) {
-        if (!this.eventIdAvailable(id)) {
-          for (let i = 0; i < SIZE; i++)
-            if (this.events[i].id === parseInt(id, 10))
-              return { pos: i, data: this.events[i] };
-        }
-      }
-      return { pos: -1, data: undefined };
-    }
-  
-    // Deletes a course from the database.
-    deleteEvent(id) {
-      const res = this.findEventById(id);
-      if (res.data !== undefined) {
-        this.events.splice(res.pos, 1);
-        return res.data;
-      }
-      return undefined;
-    }
-  
-    /* -  -  -  -  -  -  -  -  -  -  - Course's Management End -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
+//                    ╔================╗                    //
+// ===================╣      POST      ╠=================== //
+//                    ╚================╝                    //
+
+route.post('/:id0/:id1', (req, res) => {
+  const idStudent = req.params.id0;
+  const idEvent = req.params.id1;
+  let Student = studentexist(idStudent);
+  if(!Student){
+    res.status(404).send('Student not found'); // Devuelve el estado HTTP
+    return;
+  }
+  let Event = eventexist(idEvent);
+  if(!Event){
+   
+    res.status(404).send('Event not found'); // Devuelve el estado HTTP
+    return;
+  }
+
+  if (Event.students.includes(idStudent)) {
+    res.status(404).send('Student registered in event');
+    return;
+  }else {
+  Event.students.push(idStudent);
+  res.send(`Student ${Student.Name} registered in event ${Event.title}`);
+  }
+});
+
+//                    ╔================╗                    //
+// ===================╣     DELETE     ╠=================== //
+//                    ╚================╝                    //
+
+route.delete('/:id0/:id1', (req, res) => {
+  const idStudent = req.params.id0;
+  const idEvent = req.params.id1;
+  let Student = studentexist(idStudent);
+  if(!Student){
+    res.status(404).send('Student not found'); 
+    return;
+  }
+  let Event = eventexist(idEvent);
+  if(!Event){
+    res.status(404).send('Event not found'); 
+    return;
   }
   
-  // Students array for testing.
-  let students = [
-    new Student(1, "Ramon Garcia", 8, "ramon@ugto.mx", "LISC"),
-    new Student(2, "Chikistrikis", 6, "chikis@ugto.mx", "LISC"),
-    new Student(3, "Choche", 12, "Choche@ugto.mx", "LIM"),
-  ];
+  // Find the corresponding student in the student array
+  const studentIndex = Event.students.findIndex((id) => id === idStudent);
   
-  // Courses array for testing. Note that it contains non-existing arrays. It does not add them.
-  let events = [
-  new Event(1, "Ponencia C", "11:00", "Auditorio 101", "Pinales", "14/09/2023", [1, 2]),
-  new Event(2, "Ponencia C++", "16:00", "Auditorio 10", "Raul Sanchez", "15/09/2023", []),
-  new Event(3, "Ponencia Python", "08:00", "Auditorio 101", "Juan Pablo", "16/09/2023", []),
-  new Event(4, "Ponencia JavaScript", "14:00", "Auditorio 101", "Juan Carlos", "17/09/2023", []),
-  ]
-  // SchoorlManagement object initialized by constructor adding the students and courses lists.
-  const schoolMgmt = new EventManagement(students, events);
-  
-  module.exports = schoolMgmt;
-  
+
+  if (studentIndex === -1) {
+    res.status(404).send("Student not found in event");
+    return;
+  }
+    // We delete the student from the list of students registered in events
+    Events.forEach((Event) => {
+      const studentIndex = Event.students.findIndex((id) => id === idStudent);
+      if (studentIndex !== -1) {
+        Event.students.splice(studentIndex, 1);
+      }
+    });
+  res.send(`The student ${Student.Name} was delete from the event ${Event.title}`); 
+  return;
+});
+
+//                    ╔===================╗                    //
+// ===================╣ Utility functions ╠=================== //
+//                    ╚===================╝                    //
+
+// Function to check if a student exists
+function studentexist(id){
+  return (Students.find(student => student.id === parseInt(id)));
+}
+
+// Function to check if the event exists
+function eventexist(id){
+  return (Events.find(event => event.id === parseInt(id)));
+}
+
+
+module.exports = route; 

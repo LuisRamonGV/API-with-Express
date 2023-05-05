@@ -3,8 +3,9 @@ const express = require("express");
 const morgan = require("morgan");
 
 // My imports.
-const students = require("./routes/students");
-const events = require("./routes/events");
+const {routeStudents} = require("./routes/students");
+const {routeEvents} = require("./routes/events");
+const registration = require("./routes/registration")
 
 const app = express();
 
@@ -16,8 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("tiny"));
 
 // Middleware routes
-app.use("/api/students/", students);
-app.use("/api/events/", events);
+app.use("/api/students/", routeStudents);
+app.use("/api/events/", routeEvents);
+app.use("/api/registration/", registration)
 
 //                    ╔================╗                    //
 // ===================╣      ROOT      ╠=================== //
